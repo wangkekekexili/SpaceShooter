@@ -49,7 +49,10 @@ controller.A.onEvent(ControllerButtonEvent.Pressed, () => {
     }
 });
 
-game.onUpdateInterval(2000, function() {
+let enemySpeed = 20;
+let enemySpawnInterval = 2000;
+
+forever(() => {
     const enermy = sprites.create(img`
         . . . . . . . . 2 3 . . . . . .
         . . . . . . . . 2 3 . . . . . .
@@ -69,12 +72,21 @@ game.onUpdateInterval(2000, function() {
         . . . . . . . 2 2 3 . . . . . .
     `, SpriteKind.Enemy);
     enermy.x = scene.screenWidth();
-    enermy.vx = -20;
-    enermy.y = Math.randomRange(10, scene.screenHeight() - 10); 
+    enermy.vx = -enemySpeed;
+    enermy.y = Math.randomRange(10, scene.screenHeight() - 10);
     const statusBar = statusbars.create(15, 1, StatusBarKind.EnemyHealth);
     statusBar.value = 100;
     statusBar.attachToSprite(enermy);
+    pause(enemySpawnInterval);
 });
+
+game.onUpdateInterval(5000, function() {
+    enemySpeed += 5;
+    enemySpeed = Math.min(enemySpeed, 50);
+    enemySpawnInterval -= 100;
+    enemySpawnInterval = Math.max(enemySpawnInterval, 800);
+})
+
 sprites.onOverlap(SpriteKind.Player, SpriteKind.Enemy, (player, enemy) => {
     info.changeLifeBy(-1);
     onEnemyDeath(enemy);
@@ -96,7 +108,7 @@ namespace SpriteKind {
 }
 
 function onEnemyDeath(enemy: Sprite) {
-    if (Math.percentChance(80)) {
+    if (Math.percentChance(20)) {
         const powerup = sprites.create(img`
             . . . . . . . . . . . . . . . .
             . . . . . . . . . . . . . . . .
@@ -117,6 +129,7 @@ function onEnemyDeath(enemy: Sprite) {
         `, SpriteKind.PowerUp);
         powerup.x = enemy.x;
         powerup.y = enemy.y;
+        powerup.lifespan = 2000;
     }
     enemy.destroy(effects.disintegrate, 500);
 }
