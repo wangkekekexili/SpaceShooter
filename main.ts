@@ -20,8 +20,7 @@ const player: Sprite = sprites.create(img`
 controller.moveSprite(player);
 player.setStayInScreen(true);
 info.setLife(5);
-controller.A.onEvent(ControllerButtonEvent.Pressed, () => {
-    sprites.createProjectileFromSprite(img`
+const laser = img`
         . . . . . . . . . . . . . . . .
         . . . . . . . . . . . . . . . .
         . . . . . . . . . . . . . . . .
@@ -38,8 +37,18 @@ controller.A.onEvent(ControllerButtonEvent.Pressed, () => {
         . . . . . . . . . . . . . . . .
         . . . . . . . . . . . . . . . .
         . . . . . . . . . . . . . . . .
-    `, player, 50, 0);
+    `
+controller.A.onEvent(ControllerButtonEvent.Pressed, () => {
+    if (doubleFireMode && doubleFireMode.lifespan > 0) {
+        const up = sprites.createProjectileFromSprite(laser, player, 50, 0);
+        const down = sprites.createProjectileFromSprite(laser, player, 50, 0);
+        up.y -= 5;
+        down.y += 5;
+    } else {
+        sprites.createProjectileFromSprite(laser, player, 50, 0);
+    }
 });
+
 game.onUpdateInterval(2000, function() {
     const enermy = sprites.create(img`
         . . . . . . . . 2 3 . . . . . .
@@ -66,9 +75,9 @@ game.onUpdateInterval(2000, function() {
     statusBar.value = 100;
     statusBar.attachToSprite(enermy);
 });
-sprites.onOverlap(SpriteKind.Player, SpriteKind.Enemy, (player, enermy) => {
+sprites.onOverlap(SpriteKind.Player, SpriteKind.Enemy, (player, enemy) => {
     info.changeLifeBy(-1);
-    enermy.destroy(effects.disintegrate, 500);
+    onEnemyDeath(enemy);
     scene.cameraShake(4, 500);
 });
 sprites.onOverlap(SpriteKind.Projectile, SpriteKind.Enemy, (projectile, enermy) => {
@@ -77,6 +86,63 @@ sprites.onOverlap(SpriteKind.Projectile, SpriteKind.Enemy, (projectile, enermy) 
     statusBar.value -= 20;
 });
 statusbars.onZero(StatusBarKind.EnemyHealth, (status) => {
-    status.spriteAttachedTo().destroy(effects.disintegrate, 500);
+    onEnemyDeath(status.spriteAttachedTo());
     info.changeScoreBy(1);
 })
+
+namespace SpriteKind {
+    export const PowerUp = SpriteKind.create();
+    export const Mode = SpriteKind.create();
+}
+
+function onEnemyDeath(enemy: Sprite) {
+    if (Math.percentChance(80)) {
+        const powerup = sprites.create(img`
+            . . . . . . . . . . . . . . . .
+            . . . . . . . . . . . . . . . .
+            . . . . . . . . . . . . . . . .
+            . . . . 2 2 2 2 2 2 2 2 2 . . .
+            . . . . 2 d d d d d d d 2 . . .
+            . . . . 2 d 6 6 6 6 6 d 2 . . .
+            . . . . 2 d 6 d d d 6 d 2 . . .
+            . . . . 2 d 6 d d d 6 d 2 . . .
+            . . . . 2 d 6 6 6 6 6 d 2 . . .
+            . . . . 2 d 6 d d d d d 2 . . .
+            . . . . 2 2 6 d d d d 2 2 . . .
+            . . . . . 2 2 2 d d 2 2 . . . .
+            . . . . . . . 2 2 2 2 . . . . .
+            . . . . . . . . . . . . . . . .
+            . . . . . . . . . . . . . . . .
+            . . . . . . . . . . . . . . . .
+        `, SpriteKind.PowerUp);
+        powerup.x = enemy.x;
+        powerup.y = enemy.y;
+    }
+    enemy.destroy(effects.disintegrate, 500);
+}
+
+let doubleFireMode: Sprite = null;
+sprites.onOverlap(SpriteKind.Player, SpriteKind.PowerUp, (player, powerUp) => {
+    doubleFireMode = sprites.create(img`
+        . . . . . . . . . . . . . . . .
+        . . . . . . . . . . . . . . . .
+        . . . . . . . . . . . . . . . .
+        . . . . . . . . . . . . . . . .
+        . . . . . . . . . . . . . . . .
+        . . . . 2 . . . . . . 2 . . . .
+        . . . . 2 . . . . . . 2 . . . .
+        . . 2 2 2 2 2 . . 2 2 2 2 2 . .
+        . . . . 2 . . . . . . 2 . . . .
+        . . . . 2 . . . . . . 2 . . . .
+        . . . . . . . . . . . . . . . .
+        . . . . . . . . . . . . . . . .
+        . . . . . . . . . . . . . . . .
+        . . . . . . . . . . . . . . . .
+        . . . . . . . . . . . . . . . .
+        . . . . . . . . . . . . . . . .
+    `, SpriteKind.Mode);
+    doubleFireMode.x = 40;
+    doubleFireMode.y = 5;
+    doubleFireMode.lifespan = 10000
+    powerUp.destroy();
+});
