@@ -38,14 +38,29 @@ const laser = img`
         . . . . . . . . . . . . . . . .
         . . . . . . . . . . . . . . . .
     `
+
+let shots = 5;
 controller.A.onEvent(ControllerButtonEvent.Pressed, () => {
+    if (shots <= 0) {
+        return;
+    }
+    shots -= 1;
     if (doubleFireMode && doubleFireMode.lifespan > 0) {
         const up = sprites.createProjectileFromSprite(laser, player, 50, 0);
         const down = sprites.createProjectileFromSprite(laser, player, 50, 0);
         up.y -= 5;
         down.y += 5;
+        down.onDestroyed(() => {
+            shots += 0.5;
+        });
+        up.onDestroyed(() => {
+            shots += 0.5;
+        });
     } else {
-        sprites.createProjectileFromSprite(laser, player, 50, 0);
+        const s = sprites.createProjectileFromSprite(laser, player, 50, 0);
+        s.onDestroyed(() => {
+            shots += 1;
+        })
     }
 });
 
@@ -159,3 +174,4 @@ sprites.onOverlap(SpriteKind.Player, SpriteKind.PowerUp, (player, powerUp) => {
     doubleFireMode.lifespan = 10000
     powerUp.destroy();
 });
+
