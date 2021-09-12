@@ -73,6 +73,10 @@ sprites.onOverlap(SpriteKind.Player, SpriteKind.Enemy, (player, enermy) => {
 });
 sprites.onOverlap(SpriteKind.Projectile, SpriteKind.Enemy, (projectile, enermy) => {
     projectile.destroy();
-    enermy.destroy(effects.disintegrate, 500);
-    info.changeScoreBy(1);
+    const statusBar = statusbars.getStatusBarAttachedTo(StatusBarKind.EnemyHealth, enermy);
+    statusBar.value -= 20;
 });
+statusbars.onZero(StatusBarKind.EnemyHealth, (status) => {
+    status.spriteAttachedTo().destroy(effects.disintegrate, 500);
+    info.changeScoreBy(1);
+})
