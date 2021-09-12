@@ -92,6 +92,7 @@ forever(() => {
     const statusBar = statusbars.create(15, 1, StatusBarKind.EnemyHealth);
     statusBar.value = 100;
     statusBar.attachToSprite(enermy);
+    enermy.setFlag(SpriteFlag.AutoDestroy, true);
     pause(enemySpawnInterval);
 });
 
